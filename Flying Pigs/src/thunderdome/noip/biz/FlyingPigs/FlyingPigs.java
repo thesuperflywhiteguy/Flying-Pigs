@@ -1,15 +1,17 @@
 package thunderdome.noip.biz.FlyingPigs;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map.Entry;
 
+import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Server;
+import org.bukkit.entity.Arrow;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Pig;
-import org.bukkit.entity.Snowball;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -19,6 +21,7 @@ import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerItemHeldEvent;
+import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.vehicle.VehicleExitEvent;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -26,7 +29,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 public final class FlyingPigs extends JavaPlugin {
 
     private final HashMap<Player, PigData> pigMap = new HashMap<Player, PigData>();
-
+    private ArrayList<String> offlinePlayers = new ArrayList<String>();
     @Override
     public void onEnable() {
         Server s = getServer();
@@ -48,47 +51,23 @@ public final class FlyingPigs extends JavaPlugin {
             for (Entry<Player, PigData> e : pigMap.entrySet()) {
                 Player player = e.getKey();
                 PigData pigData = e.getValue();
-//                if (pigData.pig == null){
-//                    if (player.isOnline()){
-//                        if (player.isInsideVehicle()){
-//                            pigData.pig = (Pig)player.getVehicle();
-//                            pigData.speed = 0;
-//                            getServer().getLogger().info("pig is back");
-//                        }
-//                        //pigData.pig = (Pig) player.getWorld().spawnEntity(player.getLocation().subtract(new Vector(0,0,-1)), EntityType.PIG);
-//                        //pigData.pig.setSaddle(true);
-//                       // pigData.pig.setPassenger(player);
-//                        //pigData.speed = 0;
-//                        //e.setValue(pigData);
-//                        getServer().getLogger().info("re-adding pig");
-//                        continue;
-//                    }
-//                    else{
-                //        continue;
-                //    }
-                //}
-                if (pigData.pig == null && player.isOnline()){
-                  pigData.pig = (Pig) player.getWorld().spawnEntity(player.getLocation(), EntityType.PIG);
-                  pigData.pig.setSaddle(true);
-                  pigData.pig.setPassenger(player);
-                  pigData.speed = 0;
-                  getServer().getLogger().info("re-adding pig");
-                }
-                else if (!player.isOnline()) {
-                    //remove the pig because player is disco
-                    //pigData.pig.remove();
-                    //pigData.pig = null;
+                if (!player.isOnline()) {
                     pigData.speed = 0;
                     pigData.pig = null;
-                    //pigMap.put(player, pigData);
                     continue;
                 } 
-//                else if (pigData.pig.isEmpty() || pigData.pig.isDead()) {
-//                    getServer().getLogger().info("Removing abandond pig!");
-//                    //remove the entity from the pigMap because the rider hopped off
-//                    pigMap.remove(player);
-//                    return;
-//                }
+                else if (pigData.pig == null) {
+                    Pig newpig = (Pig) player.getWorld().spawnEntity(player.getLocation(), EntityType.PIG);
+                    newpig.setSaddle(true);
+                    pigData.pig = newpig;
+                    pigData.pig.setPassenger(player); 
+                    player.sendMessage(ChatColor.BLUE   + "------------Wee Haw!!-----------");
+                    player.sendMessage(ChatColor.GREEN  + "--Scroll forward to fly faster--");
+                    player.sendMessage(ChatColor.RED    + "----Scroll back to slow down----");
+                    player.sendMessage(ChatColor.YELLOW + "------left click to fire!!------"); 
+                    pigData.speed = 0;
+                    getServer().getLogger().info("Setting Passanger!");
+                }
 
                 // rework the controls of the pig here
                 Location playerLocation = player.getEyeLocation();
@@ -99,14 +78,18 @@ public final class FlyingPigs extends JavaPlugin {
             }
         }
     }
+    
     public class PigData {
         public PigData(Pig p, double s){
             pig = p;
             speed = s;
+            tickTimer = 0;
         }
         public Pig pig;
         public double speed;
+        public int tickTimer;
     }
+    
     public class EventListeners implements Listener {
 
         @EventHandler
@@ -115,7 +98,12 @@ public final class FlyingPigs extends JavaPlugin {
             if (entity.getType().equals(EntityType.PIG)) {
                 Pig pig = (Pig) entity;
                 if (pig.isEmpty() && pig.hasSaddle()) {
-                    pigMap.put(e.getPlayer(), new PigData(pig, 0));
+                    Player player = e.getPlayer();
+                    pigMap.put(player, new PigData(pig, 0));
+                    player.sendMessage(ChatColor.BLUE   + "------------Wee Haw!!-----------");
+                    player.sendMessage(ChatColor.GREEN  + "--Scroll forward to fly faster--");
+                    player.sendMessage(ChatColor.RED    + "----Scroll back to slow down----");
+                    player.sendMessage(ChatColor.YELLOW + "------left click to fire!!------"); 
                 }
             }
         }
@@ -125,12 +113,12 @@ public final class FlyingPigs extends JavaPlugin {
         public void onPlayerInteract(PlayerInteractEvent event) {
             final Action action = event.getAction();
             if (pigMap.containsKey(event.getPlayer())){
-                if (action == Action.LEFT_CLICK_BLOCK || action == Action.LEFT_CLICK_AIR){
+                if (action == Action.LEFT_CLICK_AIR){
                     Player p = event.getPlayer();
                     Location eyeLocation = p.getEyeLocation();
-                    Snowball snowball = p.getWorld().spawn(eyeLocation.add(eyeLocation.getDirection().multiply(3)), Snowball.class);
-                    snowball.setShooter(p);
-                    snowball.setVelocity(p.getLocation().getDirection().multiply(2)); 
+                    Arrow arrow = p.getWorld().spawn(eyeLocation.add(eyeLocation.getDirection().multiply(3)), Arrow.class);
+                    arrow.setShooter(p);
+                    arrow.setVelocity(p.getLocation().getDirection().multiply(2)); 
                     event.setCancelled(true);
                 }
             }
@@ -143,8 +131,19 @@ public final class FlyingPigs extends JavaPlugin {
                 Pig hazardPig = pigMap.get(player).pig;
                 hazardPig.eject();
                 hazardPig.remove();
+                offlinePlayers.add(player.getName());
             }
-            
+        }
+
+        @EventHandler (priority = EventPriority.HIGH)
+        public void onPlayerLogin(PlayerLoginEvent event) {
+            Player player = event.getPlayer();
+            getServer().getLogger().info("playerLogin event");
+            if (offlinePlayers.contains(player.getName())){
+                PigData pigData = new PigData(null,0);
+                pigMap.put(player, pigData);
+                offlinePlayers.remove(player.getName());
+            }
         }
         
         @EventHandler (priority = EventPriority.HIGH)
@@ -178,7 +177,6 @@ public final class FlyingPigs extends JavaPlugin {
                 {
                     if (pigMap.containsKey(player)){
                         pigMap.remove(player);
-                        getServer().getLogger().info("Removing abandond pig!");
                     }
                 }
             }
