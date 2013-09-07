@@ -1,0 +1,112 @@
+package thunderdome.noip.biz.FlyingPigs;
+
+import java.util.HashMap;
+import java.util.Map.Entry;
+
+import org.bukkit.Location;
+import org.bukkit.Server;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Player;
+import org.bukkit.entity.Pig;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerInteractEntityEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerVelocityEvent;
+import org.bukkit.plugin.java.JavaPlugin;
+
+public final class FlyingPigs extends JavaPlugin {
+
+    private final HashMap<String, Pig> pigMap = new HashMap<String, Pig>();
+    private final HashMap<String, Player> offlinePigMap = new HashMap<String, Player>();
+    Boolean locked = false;
+
+    @Override
+    public void onEnable() {
+        Server s = getServer();
+        //TODO may need to check a file to load state
+        s.getScheduler().scheduleSyncRepeatingTask(this, new Controller(), 1, 1);
+        s.getPluginManager().registerEvents(new LoginListener(), this);
+        s.getLogger().info("Daves Custom plugin enabled!");
+    }
+
+    @Override
+    public void onDisable() {
+        Server s = getServer();
+        s.getLogger().info("Daves Custom plugin disabled!");
+        //TODO may want to create a file to save state
+    }
+
+    private class Controller implements Runnable {
+        public void run() {
+            Server s = getServer();
+            for (Entry<String, Player> e : offlinePigMap.entrySet()) {
+                String name = e.getKey();
+                if (e.getValue() != null) {
+                    Player player = e.getValue();
+                    Pig newPig = (Pig) player.getWorld().spawnEntity(player.getLocation(), EntityType.PIG);
+                    newPig.setSaddle(true);
+                    if (newPig.setPassenger(player)) {
+                        pigMap.put(player.getName(), newPig);
+                    }
+                    offlinePigMap.remove(name);
+                }
+            }
+            for (Entry<String, Pig> e : pigMap.entrySet()) {
+                String pn = e.getKey();
+
+                Player player = s.getPlayerExact(pn);
+
+                Pig pig = e.getValue();
+                if (player == null || !player.isOnline()) {
+                    //remove the pig because player is disco
+                    pig.remove();
+                    pigMap.remove(pn);
+                    offlinePigMap.put(pn, null);
+                    continue;
+                } else if (pig.isEmpty()) {
+                    //remove the entity from the pigMap because the rider hopped off
+                    pigMap.remove(pn);
+                    continue;
+                }
+
+                // rework the controls of the pig here
+                Location playerLocation = player.getEyeLocation();
+
+                pig.setTarget(player);
+
+                Location pigLocation = pig.getLocation();
+                pigLocation.setPitch(playerLocation.getPitch());
+
+                pigLocation.setYaw(playerLocation.getYaw());
+
+                pig.setVelocity(player.getVelocity());
+            }
+        }
+    }
+
+    public class LoginListener implements Listener {
+
+        @EventHandler
+        public void hoppedOnAPig(PlayerInteractEntityEvent e) {
+            Entity entity = e.getRightClicked();
+            if (entity.getType().equals(EntityType.PIG)) {
+                Pig pig = (Pig) entity;
+                if (pig.isEmpty() && pig.hasSaddle()) {
+                    pigMap.put(e.getPlayer().getName(), pig);
+                    e.getPlayer().setAllowFlight(true);
+                }
+            }
+        }
+
+        @EventHandler
+        public void playerJoin(PlayerJoinEvent event) {
+            Player player = event.getPlayer();
+            if (offlinePigMap.containsKey(player.getName())) {
+                offlinePigMap.put(player.getName(), player);
+            }
+        }
+        
+    }
+}
