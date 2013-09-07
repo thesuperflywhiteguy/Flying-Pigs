@@ -174,9 +174,12 @@ public final class FlyingPigs extends JavaPlugin {
         public void pigExit(VehicleExitEvent event) {
             if (event.getExited() instanceof Player){
                 Player player = (Player)event.getExited();
-                if (pigMap.containsKey(player)){
-                    pigMap.remove(player);
-                    getServer().getLogger().info("Removing abandond pig!");
+                if(player.isOnline())
+                {
+                    if (pigMap.containsKey(player)){
+                        pigMap.remove(player);
+                        getServer().getLogger().info("Removing abandond pig!");
+                    }
                 }
             }
         }
