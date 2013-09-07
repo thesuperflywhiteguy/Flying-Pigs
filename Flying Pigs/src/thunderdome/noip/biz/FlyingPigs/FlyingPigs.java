@@ -19,6 +19,8 @@ import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerItemHeldEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.vehicle.VehicleExitEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public final class FlyingPigs extends JavaPlugin {
@@ -65,21 +67,28 @@ public final class FlyingPigs extends JavaPlugin {
                 //        continue;
                 //    }
                 //}
-                //else 
-                if (!player.isOnline()) {
+                if (pigData.pig == null && player.isOnline()){
+                  pigData.pig = (Pig) player.getWorld().spawnEntity(player.getLocation(), EntityType.PIG);
+                  pigData.pig.setSaddle(true);
+                  pigData.pig.setPassenger(player);
+                  pigData.speed = 0;
+                  getServer().getLogger().info("re-adding pig");
+                }
+                else if (!player.isOnline()) {
                     //remove the pig because player is disco
                     //pigData.pig.remove();
                     //pigData.pig = null;
                     pigData.speed = 0;
+                    pigData.pig = null;
                     //pigMap.put(player, pigData);
                     continue;
                 } 
-                else if (pigData.pig.isEmpty() || pigData.pig.isDead()) {
-                    getServer().getLogger().info("Removing abandond pig!");
-                    //remove the entity from the pigMap because the rider hopped off
-                    pigMap.remove(player);
-                    return;
-                }
+//                else if (pigData.pig.isEmpty() || pigData.pig.isDead()) {
+//                    getServer().getLogger().info("Removing abandond pig!");
+//                    //remove the entity from the pigMap because the rider hopped off
+//                    pigMap.remove(player);
+//                    return;
+//                }
 
                 // rework the controls of the pig here
                 Location playerLocation = player.getEyeLocation();
@@ -126,7 +135,18 @@ public final class FlyingPigs extends JavaPlugin {
                 }
             }
         }
-
+        
+        @EventHandler (priority = EventPriority.HIGH)
+        public void onPlayerQuit(PlayerQuitEvent event) {
+            Player player = event.getPlayer();
+            if (pigMap.containsKey(player)){
+                Pig hazardPig = pigMap.get(player).pig;
+                hazardPig.eject();
+                hazardPig.remove();
+            }
+            
+        }
+        
         @EventHandler (priority = EventPriority.HIGH)
         public void onDamageEntity(EntityDamageEvent event) {
             if (event.getCause() == DamageCause.FALL){
@@ -145,6 +165,18 @@ public final class FlyingPigs extends JavaPlugin {
                     if (pigMap.containsKey(player)){
                         event.setCancelled(true);
                     }
+                }
+            }
+        }
+        
+
+        @EventHandler (priority = EventPriority.HIGH)
+        public void pigExit(VehicleExitEvent event) {
+            if (event.getExited() instanceof Player){
+                Player player = (Player)event.getExited();
+                if (pigMap.containsKey(player)){
+                    pigMap.remove(player);
+                    getServer().getLogger().info("Removing abandond pig!");
                 }
             }
         }
