@@ -40,6 +40,7 @@ public final class FlyingPigs extends JavaPlugin {
     }
 
     private class Controller implements Runnable {
+        private Location lastPlayerEye;
         public void run() {
             for (Entry<Player, PigData> e : pigMap.entrySet()) {
                 Player player = e.getKey();
@@ -76,7 +77,13 @@ public final class FlyingPigs extends JavaPlugin {
                 Location pigLocation = pigData.pig.getLocation();
                 pigLocation.setPitch(playerLocation.getPitch());
                 pigLocation.setYaw(playerLocation.getYaw());
-                pigData.pig.setVelocity(pigLocation.getDirection().multiply(pigData.speed));
+                double steveSpeed = Math.acos(playerLocation.getDirection().dot(lastPlayerEye.getDirection()));
+                if(steveSpeed < 0.02)
+                {
+                    steveSpeed = 0.0;
+                }
+                pigData.pig.setVelocity(pigLocation.getDirection().multiply(steveSpeed));
+                lastPlayerEye = playerLocation;
             }
         }
     }
