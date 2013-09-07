@@ -46,37 +46,39 @@ public final class FlyingPigs extends JavaPlugin {
             for (Entry<Player, PigData> e : pigMap.entrySet()) {
                 Player player = e.getKey();
                 PigData pigData = e.getValue();
-                if (pigData.pig == null){
-                    if (player.isOnline()){
-                        if (player.isInsideVehicle()){
-                            pigData.pig = (Pig)player.getVehicle();
-                            pigData.speed = 0;
-                            getServer().getLogger().info("pig is back");
-                        }
-                        //pigData.pig = (Pig) player.getWorld().spawnEntity(player.getLocation().subtract(new Vector(0,0,-1)), EntityType.PIG);
-                        //pigData.pig.setSaddle(true);
-                       // pigData.pig.setPassenger(player);
-                        //pigData.speed = 0;
-                        //e.setValue(pigData);
-                        getServer().getLogger().info("re-adding pig");
-                        continue;
-                    }
-                    else{
-                        continue;
-                    }
-                }
-                else if (!player.isOnline()) {
+//                if (pigData.pig == null){
+//                    if (player.isOnline()){
+//                        if (player.isInsideVehicle()){
+//                            pigData.pig = (Pig)player.getVehicle();
+//                            pigData.speed = 0;
+//                            getServer().getLogger().info("pig is back");
+//                        }
+//                        //pigData.pig = (Pig) player.getWorld().spawnEntity(player.getLocation().subtract(new Vector(0,0,-1)), EntityType.PIG);
+//                        //pigData.pig.setSaddle(true);
+//                       // pigData.pig.setPassenger(player);
+//                        //pigData.speed = 0;
+//                        //e.setValue(pigData);
+//                        getServer().getLogger().info("re-adding pig");
+//                        continue;
+//                    }
+//                    else{
+                //        continue;
+                //    }
+                //}
+                //else 
+                if (!player.isOnline()) {
                     //remove the pig because player is disco
-                    pigData.pig.remove();
-                    pigData.pig = null;
+                    //pigData.pig.remove();
+                    //pigData.pig = null;
+                    pigData.speed = 0;
                     //pigMap.put(player, pigData);
                     continue;
                 } 
-                else if (pigData.pig.isEmpty()) {
+                else if (pigData.pig.isEmpty() || pigData.pig.isDead()) {
                     getServer().getLogger().info("Removing abandond pig!");
                     //remove the entity from the pigMap because the rider hopped off
                     pigMap.remove(player);
-                    continue;
+                    return;
                 }
 
                 // rework the controls of the pig here
@@ -113,13 +115,15 @@ public final class FlyingPigs extends JavaPlugin {
         @EventHandler (priority = EventPriority.HIGH)
         public void onPlayerInteract(PlayerInteractEvent event) {
             final Action action = event.getAction();
-            if (action == Action.LEFT_CLICK_BLOCK || action == Action.LEFT_CLICK_AIR){
-                Player p = event.getPlayer();
-                Location eyeLocation = p.getEyeLocation();
-                Snowball snowball = p.getWorld().spawn(eyeLocation.add(eyeLocation.getDirection().multiply(3)), Snowball.class);
-                snowball.setShooter(p);
-                snowball.setVelocity(p.getLocation().getDirection().multiply(2)); 
-                event.setCancelled(true);
+            if (pigMap.containsKey(event.getPlayer())){
+                if (action == Action.LEFT_CLICK_BLOCK || action == Action.LEFT_CLICK_AIR){
+                    Player p = event.getPlayer();
+                    Location eyeLocation = p.getEyeLocation();
+                    Snowball snowball = p.getWorld().spawn(eyeLocation.add(eyeLocation.getDirection().multiply(3)), Snowball.class);
+                    snowball.setShooter(p);
+                    snowball.setVelocity(p.getLocation().getDirection().multiply(2)); 
+                    event.setCancelled(true);
+                }
             }
         }
 
