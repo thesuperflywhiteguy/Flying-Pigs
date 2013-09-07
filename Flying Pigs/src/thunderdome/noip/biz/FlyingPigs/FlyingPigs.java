@@ -9,6 +9,7 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Pig;
+import org.bukkit.entity.Snowball;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -17,6 +18,7 @@ import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerItemHeldEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public final class FlyingPigs extends JavaPlugin {
@@ -40,19 +42,24 @@ public final class FlyingPigs extends JavaPlugin {
     }
 
     private class Controller implements Runnable {
-        private Location lastPlayerEye;
         public void run() {
             for (Entry<Player, PigData> e : pigMap.entrySet()) {
                 Player player = e.getKey();
                 PigData pigData = e.getValue();
                 if (pigData.pig == null){
                     if (player.isOnline()){
-                        pigData.pig = (Pig) player.getWorld().spawnEntity(player.getLocation(), EntityType.PIG);
-                        pigData.pig.setSaddle(true);
-                        pigData.pig.setPassenger(player);
-                        pigData.speed = 0;
+                        if (player.isInsideVehicle()){
+                            pigData.pig = (Pig)player.getVehicle();
+                            pigData.speed = 0;
+                            getServer().getLogger().info("pig is back");
+                        }
+                        //pigData.pig = (Pig) player.getWorld().spawnEntity(player.getLocation().subtract(new Vector(0,0,-1)), EntityType.PIG);
+                        //pigData.pig.setSaddle(true);
+                       // pigData.pig.setPassenger(player);
+                        //pigData.speed = 0;
                         //e.setValue(pigData);
                         getServer().getLogger().info("re-adding pig");
+                        continue;
                     }
                     else{
                         continue;
@@ -77,13 +84,7 @@ public final class FlyingPigs extends JavaPlugin {
                 Location pigLocation = pigData.pig.getLocation();
                 pigLocation.setPitch(playerLocation.getPitch());
                 pigLocation.setYaw(playerLocation.getYaw());
-                double steveSpeed = Math.acos(playerLocation.getDirection().dot(lastPlayerEye.getDirection()));
-                if(steveSpeed < 0.02)
-                {
-                    steveSpeed = 0.0;
-                }
-                pigData.pig.setVelocity(pigLocation.getDirection().multiply(steveSpeed));
-                lastPlayerEye = playerLocation;
+                pigData.pig.setVelocity(pigLocation.getDirection().multiply(pigData.speed));
             }
         }
     }
@@ -112,23 +113,14 @@ public final class FlyingPigs extends JavaPlugin {
         @EventHandler (priority = EventPriority.HIGH)
         public void onPlayerInteract(PlayerInteractEvent event) {
             final Action action = event.getAction();
-              if (action == Action.LEFT_CLICK_AIR || action == Action.RIGHT_CLICK_AIR) {
-            
-                  Player player = event.getPlayer();
-                  if (pigMap.containsKey(player)){
-                      PigData pigData = pigMap.get(player);
-                      double speed = pigData.speed;
-                      if (action == Action.LEFT_CLICK_AIR){
-                          speed += 0.25;
-                      }
-                      else{
-                          speed -= 0.25;
-                      }
-                      if (speed > 1) speed = 1;
-                      if (speed < 0 ) speed = 0;
-                      pigData.speed = speed;
-                  }
-              }
+            if (action == Action.LEFT_CLICK_BLOCK || action == Action.LEFT_CLICK_AIR){
+                Player p = event.getPlayer();
+                Location eyeLocation = p.getEyeLocation();
+                Snowball snowball = p.getWorld().spawn(eyeLocation.add(eyeLocation.getDirection().multiply(3)), Snowball.class);
+                snowball.setShooter(p);
+                snowball.setVelocity(p.getLocation().getDirection().multiply(2)); 
+                event.setCancelled(true);
+            }
         }
 
         @EventHandler (priority = EventPriority.HIGH)
@@ -150,6 +142,50 @@ public final class FlyingPigs extends JavaPlugin {
                         event.setCancelled(true);
                     }
                 }
+            }
+        }
+        
+        @EventHandler (priority = EventPriority.HIGH)
+        public void onItemScroll(PlayerItemHeldEvent event) {
+            if (pigMap.containsKey(event.getPlayer())){
+                int currentSpot = event.getPreviousSlot();
+                int nextSpot = event.getNewSlot();
+                PigData pigData = pigMap.get(event.getPlayer());
+                double speed = pigData.speed;
+                if (currentSpot == 0){
+                   if (nextSpot != 1){
+                       speed += 0.1;
+                   }
+                   else{
+                       //speed up
+                       speed -= 0.1;
+                   }
+                }
+                else if (currentSpot == 8){
+                    if (nextSpot != 0){
+                        //slow down
+                        speed += 0.1;
+                    }
+                    else{
+                        //speed up
+                        speed -= 0.1;
+                    }
+                }
+                else if (currentSpot < nextSpot){
+                    //speed up
+                    speed -= 0.1;
+                }
+                else{
+                    //slow down
+                    speed += 0.1;
+                }
+                if (speed < 0){
+                    speed = 0;
+                }
+                else if (speed > 1){
+                    speed = 1;
+                }
+                pigData.speed = speed;
             }
         }
     }
