@@ -1,3 +1,3 @@
 name: FlyingPigs
-main: thunderdome.noip.biz.FlyingPigs.FlyingPigs
-version: 0.1
+main:  com.github.thesuperflywhiteguy.FlyingPigs.FlyingPigs
+version: 1.1

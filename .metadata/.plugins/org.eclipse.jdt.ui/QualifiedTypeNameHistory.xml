@@ -5,10 +5,8 @@
 <fullyQualifiedTypeName name="org.bukkit.entity.LivingEntity"/>
 <fullyQualifiedTypeName name="java.util.Map.Entry"/>
 <fullyQualifiedTypeName name="org.bukkit.entity.Player"/>
-<fullyQualifiedTypeName name="org.bukkit.Location"/>
 <fullyQualifiedTypeName name="org.bukkit.event.Listener"/>
 <fullyQualifiedTypeName name="org.bukkit.event.EventHandler"/>
-<fullyQualifiedTypeName name="org.bukkit.event.player.PlayerLoginEvent"/>
 <fullyQualifiedTypeName name="org.bukkit.entity.CreatureType"/>
 <fullyQualifiedTypeName name="org.bukkit.entity.Pig"/>
 <fullyQualifiedTypeName name="org.bukkit.entity.EntityType"/>
@@ -22,4 +20,13 @@
 <fullyQualifiedTypeName name="org.bukkit.event.player.PlayerInteractEvent"/>
 <fullyQualifiedTypeName name="org.bukkit.event.block.Action"/>
 <fullyQualifiedTypeName name="org.bukkit.event.entity.EntityDamageEvent"/>
+<fullyQualifiedTypeName name="org.bukkit.Location"/>
+<fullyQualifiedTypeName name="org.bukkit.event.player.PlayerItemHeldEvent"/>
+<fullyQualifiedTypeName name="org.bukkit.event.vehicle.VehicleExitEvent"/>
+<fullyQualifiedTypeName name="org.bukkit.event.player.PlayerQuitEvent"/>
+<fullyQualifiedTypeName name="java.util.List"/>
+<fullyQualifiedTypeName name="org.bukkit.event.player.PlayerLoginEvent"/>
+<fullyQualifiedTypeName name="java.util.ArrayList"/>
+<fullyQualifiedTypeName name="org.bukkit.ChatColor"/>
+<fullyQualifiedTypeName name="org.bukkit.entity.Arrow"/>
 </qualifiedTypeNameHistroy>

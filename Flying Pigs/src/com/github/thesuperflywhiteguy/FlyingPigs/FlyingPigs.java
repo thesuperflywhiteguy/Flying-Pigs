@@ -1,4 +1,4 @@
-package thunderdome.noip.biz.FlyingPigs;
+package com.github.thesuperflywhiteguy.FlyingPigs;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -36,13 +36,10 @@ public final class FlyingPigs extends JavaPlugin {
         //TODO may need to check a file to load state
         s.getScheduler().scheduleSyncRepeatingTask(this, new Controller(), 1, 1);
         s.getPluginManager().registerEvents(new EventListeners(), this);
-        s.getLogger().info("Daves Custom plugin enabled!");
     }
 
     @Override
     public void onDisable() {
-        Server s = getServer();
-        s.getLogger().info("Daves Custom plugin disabled!");
         //TODO may want to create a file to save state
     }
 
