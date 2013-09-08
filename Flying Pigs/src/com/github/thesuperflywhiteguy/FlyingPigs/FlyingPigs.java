@@ -8,11 +8,15 @@ import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Server;
+import org.bukkit.Sound;
 import org.bukkit.entity.Arrow;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Fireball;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Pig;
+import org.bukkit.entity.Projectile;
+import org.bukkit.entity.Snowball;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -59,12 +63,19 @@ public final class FlyingPigs extends JavaPlugin {
                     newpig.setSaddle(true);
                     pigData.pig = newpig;
                     pigData.pig.setPassenger(player); 
-                    player.sendMessage(ChatColor.BLUE   + "------------Wee Haw!!-----------");
-                    player.sendMessage(ChatColor.GREEN  + "--Scroll forward to fly faster--");
-                    player.sendMessage(ChatColor.RED    + "----Scroll back to slow down----");
-                    player.sendMessage(ChatColor.YELLOW + "------left click to fire!!------"); 
+                    player.sendMessage(ChatColor.BLUE   + "-------------------Wee Haw!!-------------------");
+                    player.sendMessage(ChatColor.GREEN  + "----------Scroll forward to fly faster---------");
+                    player.sendMessage(ChatColor.RED    + "------------Scroll back to slow down-----------");
+                    player.sendMessage(ChatColor.BLUE   + "-----Dirrection goes where you are looking-----");
+                    player.sendMessage(ChatColor.YELLOW + "----right click to shoot with item in hand!!---"); 
+                    player.sendMessage(ChatColor.YELLOW + "----------Infinate Arrows | Snowballs!!--------"); 
+                    player.sendMessage(ChatColor.YELLOW + "----Try using up 32 blaze powder at a time ----"); 
                     pigData.speed = 0;
                     getServer().getLogger().info("Setting Passanger!");
+                }
+                else if (pigData.pig.isEmpty()){
+                    pigMap.remove(player);
+                    return;
                 }
 
                 // rework the controls of the pig here
@@ -98,25 +109,54 @@ public final class FlyingPigs extends JavaPlugin {
                 Player player = e.getPlayer();
                 if (pig.isEmpty() && pig.hasSaddle() && player.getItemInHand().getType() != Material.LEASH) {
                     pigMap.put(player, new PigData(pig, 0));
-                    player.sendMessage(ChatColor.BLUE   + "------------Wee Haw!!-----------");
-                    player.sendMessage(ChatColor.GREEN  + "--Scroll forward to fly faster--");
-                    player.sendMessage(ChatColor.RED    + "----Scroll back to slow down----");
-                    player.sendMessage(ChatColor.YELLOW + "------left click to fire!!------"); 
+                    player.sendMessage(ChatColor.BLUE   + "-------------------Wee Haw!!-------------------");
+                    player.sendMessage(ChatColor.GREEN  + "----------Scroll forward to fly faster---------");
+                    player.sendMessage(ChatColor.RED    + "------------Scroll back to slow down-----------");
+                    player.sendMessage(ChatColor.BLUE   + "-----Dirrection goes where you are looking-----");
+                    player.sendMessage(ChatColor.YELLOW + "----right click to shoot with item in hand!!---"); 
+                    player.sendMessage(ChatColor.YELLOW + "----------Infinate Arrows | Snowballs!!--------"); 
+                    player.sendMessage(ChatColor.YELLOW + "----Try using up 32 blaze powder at a time ----"); 
                 }
             }
         }
 
 
-        @EventHandler (priority = EventPriority.HIGH)
+        @EventHandler 
         public void onPlayerInteract(PlayerInteractEvent event) {
             final Action action = event.getAction();
-            if (pigMap.containsKey(event.getPlayer())){
-                if (action == Action.LEFT_CLICK_AIR){
+            //only fire for players riding on pigs
+            if (event.getPlayer().isInsideVehicle() && event.getPlayer().getVehicle() instanceof Pig){
+                //only fire on left click air events
                     Player p = event.getPlayer();
+                if (action == Action.RIGHT_CLICK_AIR && (p.getItemInHand().getType() == Material.ARROW || 
+                                                        p.getItemInHand().getType() == Material.SNOW_BALL || 
+                                                        p.getItemInHand().getType() == Material.BLAZE_POWDER) ){
+                    Projectile projectile = null;
                     Location eyeLocation = p.getEyeLocation();
-                    Arrow arrow = p.getWorld().spawn(eyeLocation.add(eyeLocation.getDirection().multiply(3)), Arrow.class);
-                    arrow.setShooter(p);
-                    arrow.setVelocity(p.getLocation().getDirection().multiply(2)); 
+                    if (p.getItemInHand().getType() == Material.ARROW){
+                        projectile = p.getWorld().spawn(eyeLocation.add(eyeLocation.getDirection().multiply(3)), Arrow.class);
+                        p.playSound(eyeLocation, Sound.SHOOT_ARROW, 1, 0);
+                    }
+                    else if (p.getItemInHand().getType() == Material.SNOW_BALL){
+                        projectile = p.getWorld().spawn(eyeLocation.add(eyeLocation.getDirection().multiply(3)), Snowball.class);
+                        p.playSound(eyeLocation, Sound.SHOOT_ARROW, 1, 1);
+                    }
+                    else if (p.getItemInHand().getAmount() >= 32){
+                        int remaining = p.getItemInHand().getAmount() - 32;
+                        if (remaining > 0){
+                            p.getItemInHand().setAmount(remaining);
+                        }
+                        else{
+                            p.setItemInHand(null);
+                        }
+                        projectile = p.getWorld().spawn(eyeLocation.add(eyeLocation.getDirection().multiply(3)), Fireball.class);
+                        p.playSound(eyeLocation, Sound.GHAST_FIREBALL, 1, 0);
+                    }
+                    else{
+                        return;
+                    }
+                    projectile.setShooter(p);
+                    projectile.setVelocity(p.getLocation().getDirection().multiply(2)); 
                     event.setCancelled(true);
                 }
             }
