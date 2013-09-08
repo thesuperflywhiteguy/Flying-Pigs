@@ -109,7 +109,8 @@ public final class FlyingPigs extends JavaPlugin {
             if (entity.getType().equals(EntityType.PIG)) {
                 Pig pig = (Pig) entity;
                 Player player = e.getPlayer();
-                if (pig.isEmpty() && pig.hasSaddle() && player.getItemInHand().getType() != Material.LEASH && !pig.isLeashed()) {
+                boolean holdingLeash = player.getItemInHand().getType() == Material.LEASH;
+                if (pig.isEmpty() && pig.hasSaddle() && (!holdingLeash || pig.isLeashed()) && (!pig.isLeashed() || pig.getLeashHolder() != player)) {
                     pigMap.put(player, new PigData(pig, 0));
                     player.sendMessage(ChatColor.BLUE   + "-------------------Wee Haw!!-------------------");
                     player.sendMessage(ChatColor.GREEN  + "----------Scroll forward to fly faster---------");
