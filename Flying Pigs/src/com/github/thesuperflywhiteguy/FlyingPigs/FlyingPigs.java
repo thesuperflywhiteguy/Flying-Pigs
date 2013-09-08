@@ -35,6 +35,7 @@ public final class FlyingPigs extends JavaPlugin {
 
     private final HashMap<Player, PigData> pigMap = new HashMap<Player, PigData>();
     private ArrayList<String> offlinePlayers = new ArrayList<String>();
+    private Boolean skipNextFiredEvent = false;
     @Override
     public void onEnable() {
         Server s = getServer();
@@ -50,6 +51,7 @@ public final class FlyingPigs extends JavaPlugin {
 
     private class Controller implements Runnable {
         public void run() {
+            skipNextFiredEvent = false;
             for (Entry<Player, PigData> e : pigMap.entrySet()) {
                 Player player = e.getKey();
                 PigData pigData = e.getValue();
@@ -107,7 +109,7 @@ public final class FlyingPigs extends JavaPlugin {
             if (entity.getType().equals(EntityType.PIG)) {
                 Pig pig = (Pig) entity;
                 Player player = e.getPlayer();
-                if (pig.isEmpty() && pig.hasSaddle() && player.getItemInHand().getType() != Material.LEASH) {
+                if (pig.isEmpty() && pig.hasSaddle() && player.getItemInHand().getType() != Material.LEASH && !pig.isLeashed()) {
                     pigMap.put(player, new PigData(pig, 0));
                     player.sendMessage(ChatColor.BLUE   + "-------------------Wee Haw!!-------------------");
                     player.sendMessage(ChatColor.GREEN  + "----------Scroll forward to fly faster---------");
@@ -116,6 +118,7 @@ public final class FlyingPigs extends JavaPlugin {
                     player.sendMessage(ChatColor.YELLOW + "----right click to shoot with item in hand!!---"); 
                     player.sendMessage(ChatColor.YELLOW + "----------Infinate Arrows | Snowballs!!--------"); 
                     player.sendMessage(ChatColor.YELLOW + "----Try using up 32 blaze powder at a time ----"); 
+                    skipNextFiredEvent = true;
                 }
             }
         }
@@ -125,7 +128,7 @@ public final class FlyingPigs extends JavaPlugin {
         public void onPlayerInteract(PlayerInteractEvent event) {
             final Action action = event.getAction();
             //only fire for players riding on pigs
-            if (event.getPlayer().isInsideVehicle() && event.getPlayer().getVehicle() instanceof Pig){
+            if (!skipNextFiredEvent && event.getPlayer().isInsideVehicle() && event.getPlayer().getVehicle() instanceof Pig){
                 //only fire on left click air events
                     Player p = event.getPlayer();
                 if (action == Action.RIGHT_CLICK_AIR && (p.getItemInHand().getType() == Material.ARROW || 
@@ -159,6 +162,9 @@ public final class FlyingPigs extends JavaPlugin {
                     projectile.setVelocity(p.getLocation().getDirection().multiply(2)); 
                     event.setCancelled(true);
                 }
+            }
+            else{
+                skipNextFiredEvent = false;
             }
         }
         
