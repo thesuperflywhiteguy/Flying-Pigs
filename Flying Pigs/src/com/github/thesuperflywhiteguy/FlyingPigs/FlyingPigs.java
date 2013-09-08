@@ -26,7 +26,7 @@ import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerItemHeldEvent;
-import org.bukkit.event.player.PlayerLoginEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.vehicle.VehicleExitEvent;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -181,8 +181,9 @@ public final class FlyingPigs extends JavaPlugin {
         }
 
         @EventHandler (priority = EventPriority.HIGH)
-        public void onPlayerLogin(PlayerLoginEvent event) {
+        public void onPlayerLogin(PlayerJoinEvent event) {
             Player player = event.getPlayer();
+            player.sendMessage(ChatColor.AQUA + "----Flying Pigs V1.61 Loaded----"); 
             player.setSleepingIgnored(true);
             getServer().getLogger().info("playerLogin event");
             if (offlinePlayers.contains(player.getName())){
@@ -194,7 +195,7 @@ public final class FlyingPigs extends JavaPlugin {
         
         @EventHandler (priority = EventPriority.HIGH)
         public void onDamageEntity(EntityDamageEvent event) {
-            if (event.getCause() == DamageCause.FALL){
+            if (event.getCause() == DamageCause.FALL || event.getCause() == DamageCause.SUFFOCATION){
                 Entity entity = event.getEntity();
                 if (!entity.isEmpty()){
                     Entity passenger = entity.getPassenger();
