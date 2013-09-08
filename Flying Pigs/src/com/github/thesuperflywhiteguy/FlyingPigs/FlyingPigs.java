@@ -6,6 +6,7 @@ import java.util.Map.Entry;
 
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.Server;
 import org.bukkit.entity.Arrow;
 import org.bukkit.entity.Entity;
@@ -94,8 +95,8 @@ public final class FlyingPigs extends JavaPlugin {
             Entity entity = e.getRightClicked();
             if (entity.getType().equals(EntityType.PIG)) {
                 Pig pig = (Pig) entity;
-                if (pig.isEmpty() && pig.hasSaddle()) {
-                    Player player = e.getPlayer();
+                Player player = e.getPlayer();
+                if (pig.isEmpty() && pig.hasSaddle() && player.getItemInHand().getType() != Material.LEASH) {
                     pigMap.put(player, new PigData(pig, 0));
                     player.sendMessage(ChatColor.BLUE   + "------------Wee Haw!!-----------");
                     player.sendMessage(ChatColor.GREEN  + "--Scroll forward to fly faster--");
@@ -135,6 +136,7 @@ public final class FlyingPigs extends JavaPlugin {
         @EventHandler (priority = EventPriority.HIGH)
         public void onPlayerLogin(PlayerLoginEvent event) {
             Player player = event.getPlayer();
+            player.setSleepingIgnored(true);
             getServer().getLogger().info("playerLogin event");
             if (offlinePlayers.contains(player.getName())){
                 PigData pigData = new PigData(null,0);
